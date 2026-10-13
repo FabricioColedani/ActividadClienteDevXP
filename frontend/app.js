@@ -21,6 +21,12 @@ const turnosList = document.getElementById('turnosList');
 const userName = document.getElementById('userName');
 const userRole = document.getElementById('userRole');
 const tokenPreview = document.getElementById('tokenPreview');
+const summaryTotal = document.getElementById('summaryTotal');
+const summaryActive = document.getElementById('summaryActive');
+const summaryStatus = document.getElementById('summaryStatus');
+const turnoModeChip = document.getElementById('turnoModeChip');
+const clearFormBtn = document.getElementById('clearFormBtn');
+const tabButtons = [...document.querySelectorAll('.tab-btn')];
 
 function setStatus(el, message, kind = '') {
   el.textContent = message || '';
@@ -30,7 +36,38 @@ function setStatus(el, message, kind = '') {
 function setAuthView(visible) {
   authView.classList.toggle('hidden', !visible);
   appView.classList.toggle('hidden', visible);
-  logoutBtn.classList.toggle('hidden', !visible && !state.token);
+  logoutBtn.classList.toggle('hidden', !(!visible && state.token));
+}
+
+function toggleAuthTab(tabName) {
+  const isLogin = tabName === 'login';
+  loginForm.classList.toggle('hidden', !isLogin);
+  registerForm.classList.toggle('hidden', isLogin);
+  tabButtons.forEach((button) => {
+    const active = button.dataset.tab === tabName;
+    button.classList.toggle('active', active);
+  });
+}
+
+function updateSummary() {
+  if (!state.user) {
+    summaryTotal.textContent = '0';
+    summaryActive.textContent = '0';
+    summaryStatus.textContent = 'Inactiva';
+    summaryStatus.classList.remove('cancelado');
+    return;
+  }
+
+  const total = state.turnos.length;
+  const activos = state.turnos.filter((t) => t.estado === 'reservado').length;
+  summaryTotal.textContent = String(total);
+  summaryActive.textContent = String(activos);
+  summaryStatus.textContent = state.user.role === 'Admin' ? 'Admin' : 'Usuario';
+  summaryStatus.classList.toggle('cancelado', state.user.role === 'Admin');
+}
+
+function updateModeChip() {
+  turnoModeChip.textContent = state.editingId ? 'Edición' : 'Alta';
 }
 
 async function apiRequest(path, options = {}) {
@@ -94,6 +131,7 @@ async function loadUserData() {
     state.user = me.user;
     userName.textContent = me.user.nombre;
     userRole.textContent = me.user.role;
+    userRole.className = `chip ${me.user.role === 'Admin' ? 'cancelado' : ''}`.trim();
     tokenPreview.textContent = state.token.slice(0, 18) + '...';
     await loadTurnos();
   } catch (error) {
@@ -105,8 +143,13 @@ async function loadUserData() {
 async function loadTurnos() {
   try {
     const result = await apiRequest('/turnos');
-    state.turnos = result.turnos || [];
+    state.turnos = (result.turnos || []).sort((a, b) => {
+      const aDate = new Date(`${a.fecha}T${a.hora}:00`);
+      const bDate = new Date(`${b.fecha}T${b.hora}:00`);
+      return aDate - bDate;
+    });
     renderTurnos();
+    updateSummary();
   } catch (error) {
     setStatus(turnoStatus, error.message, 'error');
   }
@@ -116,27 +159,64 @@ function renderTurnos() {
   turnosList.innerHTML = '';
 
   if (!state.turnos.length) {
-    turnosList.innerHTML = '<li class="turno-item">No hay turnos para mostrar.</li>';
+    const li = document.createElement('li');
+    li.className = 'empty';
+    li.textContent = 'Todavía no hay turnos registrados. Creá el primero desde el formulario.';
+    turnosList.appendChild(li);
     return;
   }
 
   state.turnos.forEach((turno) => {
     const li = document.createElement('li');
-    li.className = 'turno-item';
-    li.innerHTML = `
-      <div class="turno-meta">
-        <strong>${turno.fecha} ${turno.hora}</strong>
-        <span class="badge ${turno.estado === 'cancelado' ? 'cancelado' : ''}">${turno.estado}</span>
-      </div>
-      <div>Motivo: ${turno.motivo || 'Sin motivo'}</div>
-      <div>Usuario: ${turno.usuarioNombre || 'Yo'}</div>
-      <div class="actions">
-        <button class="secondary" data-action="edit" data-id="${turno.id}">Modificar</button>
-        <button class="danger" data-action="cancel" data-id="${turno.id}">Cancelar</button>
-      </div>
+    li.className = 'turno-card';
+
+    const meta = document.createElement('div');
+    meta.className = 'turno-header';
+
+    const date = document.createElement('div');
+    date.className = 'turno-date';
+    date.textContent = `${turno.fecha} · ${turno.hora}`;
+
+    const badge = document.createElement('span');
+    badge.className = `chip ${turno.estado === 'cancelado' ? 'cancelado' : ''}`.trim();
+    badge.textContent = turno.estado;
+
+    meta.append(date, badge);
+
+    const body = document.createElement('div');
+    body.className = 'turno-body';
+    body.innerHTML = `
+      <div><strong>Motivo:</strong> ${turno.motivo || 'Sin motivo'}</div>
+      <div><strong>Usuario:</strong> ${turno.usuarioNombre || 'Yo'}</div>
     `;
+
+    const actions = document.createElement('div');
+    actions.className = 'turno-actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'small-btn secondary';
+    editBtn.dataset.action = 'edit';
+    editBtn.dataset.id = turno.id;
+    editBtn.textContent = 'Modificar';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'small-btn danger';
+    cancelBtn.dataset.action = 'cancel';
+    cancelBtn.dataset.id = turno.id;
+    cancelBtn.textContent = 'Cancelar';
+
+    actions.append(editBtn, cancelBtn);
+    li.append(meta, body, actions);
     turnosList.appendChild(li);
   });
+}
+
+function clearTurnoForm() {
+  turnoForm.reset();
+  state.editingId = null;
+  updateModeChip();
 }
 
 async function handleTurnoSubmit(event) {
@@ -160,8 +240,7 @@ async function handleTurnoSubmit(event) {
       setStatus(turnoStatus, 'Turno creado correctamente.', 'success');
     }
 
-    turnoForm.reset();
-    state.editingId = null;
+    clearTurnoForm();
     await loadTurnos();
   } catch (error) {
     setStatus(turnoStatus, error.message, 'error');
@@ -190,12 +269,11 @@ async function handleTurnoActions(event) {
       document.getElementById('turnoHora').value = turno.hora;
       document.getElementById('turnoMotivo').value = turno.motivo || '';
       state.editingId = id;
+      updateModeChip();
       setStatus(turnoStatus, 'Editando turno seleccionado.', 'success');
     }
 
-    if (action === 'cancel' || action === 'edit') {
-      await loadTurnos();
-    }
+    await loadTurnos();
   } catch (error) {
     setStatus(turnoStatus, error.message, 'error');
   }
@@ -205,15 +283,18 @@ function logout() {
   state.token = '';
   state.user = null;
   state.turnos = [];
+  state.editingId = null;
   localStorage.removeItem(tokenKey);
   userName.textContent = '-';
-  userRole.textContent = '-';
+  userRole.textContent = 'Usuario';
+  userRole.className = 'chip';
   tokenPreview.textContent = 'No activo';
-  turnoForm.reset();
+  clearTurnoForm();
   setAuthView(true);
   setStatus(loginStatus, '', '');
   setStatus(registerStatus, '', '');
   setStatus(turnoStatus, '', '');
+  updateSummary();
 }
 
 loginForm.addEventListener('submit', async (event) => {
@@ -250,6 +331,14 @@ registerForm.addEventListener('submit', async (event) => {
 turnoForm.addEventListener('submit', handleTurnoSubmit);
 turnosList.addEventListener('click', handleTurnoActions);
 logoutBtn.addEventListener('click', logout);
+clearFormBtn.addEventListener('click', clearTurnoForm);
+
+tabButtons.forEach((button) => {
+  button.addEventListener('click', () => toggleAuthTab(button.dataset.tab));
+});
+
+updateSummary();
+updateModeChip();
 
 if (state.token) {
   setAuthView(false);

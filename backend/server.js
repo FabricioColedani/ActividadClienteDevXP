@@ -502,7 +502,7 @@ app.put('/api/turnos/:id', ensureAuthenticated, async (req, res) => {
              hora = $2,
              motivo = $3,
              estado = $4,
-             updated_at = NOW()
+             updated_at = CURRENT_TIMESTAMP
          WHERE id = $5
          RETURNING *`,
         [nextFecha, nextHora, nextMotivo, nextEstado, id]
@@ -541,7 +541,7 @@ app.delete('/api/turnos/:id', ensureAuthenticated, async (req, res) => {
 
     const result = await pool.query(
       `UPDATE turnos
-       SET estado = 'cancelado', updated_at = NOW()
+       SET estado = 'cancelado', updated_at = CURRENT_TIMESTAMP
        WHERE id = $1
        RETURNING *`,
       [id]

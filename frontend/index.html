@@ -3,216 +3,796 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gestión de Turnos</title>
+    <title>Turnos XP</title>
     <style>
       :root {
-        --bg: #f3f6fb;
-        --panel: #ffffff;
-        --primary: #244b8c;
-        --primary-soft: #dfeafc;
-        --danger: #c0392b;
-        --success: #1d8f5f;
-        --text: #1d2433;
-        --muted: #5a687d;
+        --bg: #eef4ff;
+        --bg-strong: #dfeaff;
+        --panel: rgba(255, 255, 255, 0.78);
+        --panel-strong: #ffffff;
+        --primary: #183d8a;
+        --primary-2: #2f6ee7;
+        --primary-soft: #ebf2ff;
+        --secondary: #5b6ef3;
+        --success: #1c8f63;
+        --success-soft: #eafaf2;
+        --danger: #d8584f;
+        --danger-soft: #fff2f0;
+        --text: #172332;
+        --muted: #586782;
+        --line: #e6ebf7;
+        --shadow: 0 20px 45px rgba(19, 42, 90, 0.12);
+        --shadow-soft: 0 12px 30px rgba(28, 59, 120, 0.08);
+        --radius-xl: 30px;
+        --radius-lg: 22px;
+        --radius-md: 14px;
       }
 
       * { box-sizing: border-box; }
-      body {
+      html, body {
         margin: 0;
-        font-family: Arial, sans-serif;
-        background: var(--bg);
-        color: var(--text);
+        min-height: 100%;
       }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(82, 126, 246, 0.18), transparent 28%),
+          radial-gradient(circle at bottom right, rgba(37, 129, 205, 0.16), transparent 30%),
+          linear-gradient(135deg, #edf4ff 0%, #f8faff 40%, #eef6ff 100%);
+        color: var(--text);
+        line-height: 1.5;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      body::before,
+      body::after {
+        content: "";
+        position: fixed;
+        inset: auto;
+        border-radius: 50%;
+        filter: blur(90px);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      body::before {
+        width: 340px;
+        height: 340px;
+        left: -80px;
+        top: 80px;
+        background: rgba(99, 138, 255, 0.18);
+      }
+
+      body::after {
+        width: 420px;
+        height: 420px;
+        right: -80px;
+        bottom: 80px;
+        background: rgba(31, 144, 207, 0.14);
+      }
+
+      button, input, textarea { font: inherit; }
+
       .container {
-        max-width: 1100px;
+        position: relative;
+        z-index: 1;
+        max-width: 1240px;
         margin: 0 auto;
+        padding: 32px 20px 56px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 28px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+      }
+
+      .brand-mark {
+        width: 48px;
+        height: 48px;
+        display: grid;
+        place-items: center;
+        border-radius: 16px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-2));
+        color: #fff;
+        font-size: 1.2rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        box-shadow: 0 18px 38px rgba(24, 61, 138, 0.28);
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-size: clamp(1.8rem, 2vw, 2.5rem);
+        letter-spacing: -0.05em;
+      }
+
+      .brand small {
+        display: block;
+        color: var(--muted);
+        font-weight: 700;
+        letter-spacing: 0.03em;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(28, 143, 99, 0.08);
+        border: 1px solid rgba(28, 143, 99, 0.12);
+        color: var(--success);
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+
+      .status-pill::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+        display: block;
+      }
+
+      .btn {
+        border: none;
+        border-radius: 12px;
+        padding: 12px 18px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--primary-2));
+        color: white;
+        box-shadow: 0 14px 26px rgba(31, 90, 196, 0.28);
+      }
+
+      .btn-secondary {
+        background: rgba(23, 61, 138, 0.08);
+        color: var(--primary);
+      }
+
+      .btn-danger {
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+
+      .btn-ghost {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--line);
+      }
+
+      .auth-shell,
+      .panel {
+        background: rgba(255, 255, 255, 0.74);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow);
+      }
+
+      .auth-shell {
+        padding: 22px;
+      }
+
+      .auth-grid {
+        display: grid;
+        grid-template-columns: 1.08fr 1.2fr;
+        gap: 24px;
+      }
+
+      .hero {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, #102d63 0%, #183d8a 38%, #2a5fc8 100%);
+        color: white;
+        border-radius: var(--radius-xl);
+        padding: 30px 28px;
+        min-height: 440px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        inset: 14px auto auto 18px;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.06);
+        filter: blur(4px);
+      }
+
+      .hero > * {
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero-kicker {
+        display: inline-flex;
+        align-self: flex-start;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        font-size: 0.74rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .hero h2 {
+        margin: 12px 0 14px;
+        font-size: clamp(2.1rem, 3vw, 3rem);
+        line-height: 1.05;
+        letter-spacing: -0.06em;
+      }
+
+      .hero p {
+        margin: 0;
+        max-width: 34ch;
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 1.04rem;
+        line-height: 1.7;
+      }
+
+      .hero-points {
+        display: grid;
+        gap: 12px;
+        margin-top: 26px;
+      }
+
+      .hero-point {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.88);
+      }
+
+      .point-bullet {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #cfe0ff, #6cc3ff);
+        box-shadow: 0 0 0 6px rgba(140, 182, 255, 0.12);
+      }
+
+      .hero-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 26px;
+      }
+
+      .metric {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        padding: 14px 12px;
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 1.2rem;
+        margin-top: 6px;
+      }
+
+      .metric span {
+        color: rgba(255,255,255,0.72);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .panel {
         padding: 24px;
       }
-      .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 20px;
-      }
-      .panel {
-        background: var(--panel);
+
+      .tabs {
+        display: inline-flex;
+        padding: 6px;
+        background: var(--primary-soft);
         border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 8px 18px rgba(35,64,110,0.1);
+        gap: 8px;
+        margin-bottom: 18px;
       }
-      .auth-grid, .main-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 20px;
+
+      .tab-btn {
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
       }
+
+      .tab-btn.active {
+        background: white;
+        color: var(--primary);
+        box-shadow: var(--shadow-soft);
+      }
+
       form {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 16px;
       }
+
       label {
         display: flex;
         flex-direction: column;
-        font-size: 14px;
-        gap: 6px;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 0.92rem;
+        font-weight: 700;
       }
-      input, textarea, button, select {
-        border: 1px solid #d9e0ee;
-        border-radius: 8px;
-        padding: 10px 12px;
-        font-size: 14px;
+
+      input, textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px 14px;
+        background: #f9fbff;
+        color: var(--text);
+        min-height: 52px;
+        box-shadow: inset 0 1px 0 rgba(19, 42, 90, 0.02);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
       }
-      button {
-        cursor: pointer;
-        background: var(--primary);
-        color: white;
-        border: none;
-        font-weight: 600;
+
+      textarea {
+        min-height: 110px;
+        resize: vertical;
       }
-      button.secondary {
-        background: var(--primary-soft);
-        color: var(--primary);
+
+      input:focus, textarea:focus {
+        border-color: rgba(47, 110, 231, 0.5);
+        box-shadow: 0 0 0 4px rgba(47, 110, 231, 0.09);
+        outline: none;
       }
-      button.danger {
-        background: var(--danger);
-      }
-      button:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
+
       .status {
-        min-height: 24px;
-        font-size: 14px;
-        margin-top: 8px;
+        min-height: 22px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-top: 4px;
+        transition: opacity 0.2s ease, transform 0.2s ease;
       }
+
       .status.error { color: var(--danger); }
       .status.success { color: var(--success); }
-      .turnos {
-        list-style: none;
-        padding: 0;
-        margin: 20px 0 0;
+
+      .hidden { display: none !important; }
+
+      .app-shell {
+        display: grid;
+        grid-template-columns: 0.9fr 1.5fr;
+        gap: 22px;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .summary-card {
+        background: linear-gradient(180deg, #f7faff 0%, #eef5ff 100%);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 16px;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+      }
+
+      .summary-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.8rem;
+        margin-bottom: 6px;
+        font-weight: 700;
+      }
+
+      .summary-card strong {
+        color: var(--primary);
+        font-size: 1.8rem;
+        letter-spacing: -0.05em;
+      }
+
+      .card-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .card-title h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        letter-spacing: -0.03em;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .chip:not(.cancelado) {
+        background: var(--success-soft);
+        color: var(--success);
+      }
+
+      .chip.cancelado {
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+
+      .mini-grid {
         display: grid;
         gap: 12px;
       }
-      .turno-item {
-        border: 1px solid #e4e9f4;
-        border-radius: 10px;
-        padding: 14px;
+
+      .user-box {
+        background: linear-gradient(180deg, #f5f9ff 0%, #edf4ff 100%);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 18px;
       }
-      .turno-meta {
+
+      .label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .user-box strong {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 1.35rem;
+        letter-spacing: -0.03em;
+      }
+
+      .token-box {
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.6;
+        word-break: break-all;
+      }
+
+      .item-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .turno-card {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+        padding: 16px;
+        box-shadow: var(--shadow-soft);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        animation: fadeInUp 0.45s ease;
+      }
+
+      .turno-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 18px 38px rgba(24, 57, 110, 0.08);
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .turno-header {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .turno-date {
+        font-weight: 800;
+        color: var(--primary);
+        letter-spacing: -0.02em;
+      }
+
+      .turno-body {
+        display: grid;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .turno-actions {
+        display: flex;
         flex-wrap: wrap;
-        margin-bottom: 8px;
+        gap: 10px;
+        margin-top: 14px;
       }
-      .badge {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 999px;
-        font-size: 12px;
+
+      .small-btn {
+        border: none;
+        border-radius: 10px;
+        padding: 9px 12px;
         font-weight: 700;
-        background: #e8f5ee;
-        color: var(--success);
+        cursor: pointer;
+        transition: transform 0.2s ease, opacity 0.2s ease;
       }
-      .badge.cancelado {
-        background: #fdecea;
+
+      .small-btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .small-btn.secondary {
+        background: var(--primary-soft);
+        color: var(--primary);
+      }
+
+      .small-btn.danger {
+        background: var(--danger-soft);
         color: var(--danger);
       }
-      .actions {
-        margin-top: 12px;
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
+
+      .empty {
+        border: 1px dashed rgba(115, 134, 175, 0.55);
+        border-radius: 18px;
+        padding: 22px 18px;
+        text-align: center;
+        color: var(--muted);
+        background: rgba(248, 251, 255, 0.72);
+        font-weight: 600;
       }
-      .hidden { display: none; }
-      @media (max-width: 700px) {
-        .header { flex-direction: column; align-items: flex-start; }
+
+      @media (max-width: 960px) {
+        .auth-grid,
+        .app-shell {
+          grid-template-columns: 1fr;
+        }
+
+        .hero {
+          min-height: auto;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .topbar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .header-actions {
+          width: 100%;
+          justify-content: space-between;
+        }
+
+        .summary-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
       }
     </style>
   </head>
   <body>
     <div class="container">
-      <div class="header">
-        <div>
-          <h1>Turnos XP</h1>
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">T</div>
+          <div>
+            <h1>Turnos XP</h1>
+            <small>Gestión de citas y reservas</small>
+          </div>
         </div>
-        <button id="logoutBtn" class="secondary hidden">Cerrar sesión</button>
-      </div>
 
-      <div id="authView" class="auth-grid">
-        <section class="panel">
-          <h2>Iniciar sesión</h2>
-          <form id="loginForm">
-            <label>
-              Email
-              <input type="email" id="loginEmail" required />
-            </label>
-            <label>
-              Contraseña
-              <input type="password" id="loginPassword" required />
-            </label>
-            <button type="submit">Entrar</button>
-          </form>
-          <div id="loginStatus" class="status"></div>
-        </section>
+        <div class="header-actions">
+          <span class="status-pill">Sistema activo</span>
+          <button id="logoutBtn" class="btn btn-secondary hidden">Cerrar sesión</button>
+        </div>
+      </header>
 
-        <section class="panel">
-          <h2>Registrarse</h2>
-          <form id="registerForm">
-            <label>
-              Nombre
-              <input type="text" id="registerNombre" required />
-            </label>
-            <label>
-              Email
-              <input type="email" id="registerEmail" required />
-            </label>
-            <label>
-              Contraseña
-              <input type="password" id="registerPassword" required />
-            </label>
-            <button type="submit">Crear cuenta</button>
-          </form>
-          <div id="registerStatus" class="status"></div>
-        </section>
+      <div id="authView" class="auth-shell">
+        <div class="auth-grid">
+          <section class="hero">
+            <div>
+              <div class="hero-kicker">Sistema de reservas</div>
+              <h2>Organiza cada turno con claridad y control.</h2>
+              <p>
+                Gestioná citas, revisá disponibilidad y mantené tu agenda ordenada con una experiencia simple y enfocada.
+              </p>
+            </div>
+
+            <div>
+              <div class="hero-points">
+                <div class="hero-point"><span class="point-bullet"></span>Registro rápido y seguro</div>
+                <div class="hero-point"><span class="point-bullet"></span>Reservas por fecha y horario</div>
+                <div class="hero-point"><span class="point-bullet"></span>Permisos y acceso por rol</div>
+              </div>
+
+              <div class="hero-metrics">
+                <div class="metric">
+                  <span>Disponibilidad</span>
+                  <strong>100%</strong>
+                </div>
+                <div class="metric">
+                  <span>Flujo</span>
+                  <strong>Simple</strong>
+                </div>
+                <div class="metric">
+                  <span>Control</span>
+                  <strong>Claro</strong>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="tabs">
+              <button type="button" class="tab-btn active" data-tab="login">Iniciar sesión</button>
+              <button type="button" class="tab-btn" data-tab="register">Registrarse</button>
+            </div>
+
+            <form id="loginForm">
+              <label>
+                Email
+                <input type="email" id="loginEmail" placeholder="tuemail@ejemplo.com" required />
+              </label>
+              <label>
+                Contraseña
+                <input type="password" id="loginPassword" placeholder="********" required />
+              </label>
+              <button type="submit" class="btn btn-primary">Entrar</button>
+              <div id="loginStatus" class="status"></div>
+            </form>
+
+            <form id="registerForm" class="hidden">
+              <label>
+                Nombre
+                <input type="text" id="registerNombre" placeholder="Tu nombre" required />
+              </label>
+              <label>
+                Email
+                <input type="email" id="registerEmail" placeholder="tuemail@ejemplo.com" required />
+              </label>
+              <label>
+                Contraseña
+                <input type="password" id="registerPassword" placeholder="Mínimo 8 caracteres" required />
+              </label>
+              <button type="submit" class="btn btn-primary">Crear cuenta</button>
+              <div id="registerStatus" class="status"></div>
+            </form>
+          </section>
+        </div>
       </div>
 
       <div id="appView" class="hidden">
-        <div class="main-grid">
-          <section class="panel">
-            <h2>Crear turno</h2>
+        <div class="app-shell">
+          <aside class="panel">
+            <div class="card-title">
+              <h3>Resumen</h3>
+              <span class="chip" id="summaryStatus">Activa</span>
+            </div>
+
+            <div class="summary-grid">
+              <div class="summary-card">
+                <span>Total</span>
+                <strong id="summaryTotal">0</strong>
+              </div>
+              <div class="summary-card">
+                <span>Reservados</span>
+                <strong id="summaryActive">0</strong>
+              </div>
+            </div>
+
+            <div class="mini-grid">
+              <div class="user-box">
+                <span class="label">Usuario</span>
+                <strong id="userName">-</strong>
+                <div id="userRole" class="chip">Usuario</div>
+              </div>
+
+              <div class="user-box">
+                <span class="label">Token</span>
+                <div id="tokenPreview" class="token-box">No activo</div>
+              </div>
+            </div>
+          </aside>
+
+          <main class="panel">
+            <div class="card-title">
+              <h3>Nuevo turno</h3>
+              <span class="chip" id="turnoModeChip">Alta</span>
+            </div>
+
             <form id="turnoForm">
-              <label>
-                Fecha
-                <input type="date" id="turnoFecha" required />
-              </label>
-              <label>
-                Hora
-                <input type="time" id="turnoHora" required />
-              </label>
+              <div class="summary-grid">
+                <label>
+                  Fecha
+                  <input type="date" id="turnoFecha" required />
+                </label>
+                <label>
+                  Hora
+                  <input type="time" id="turnoHora" required />
+                </label>
+              </div>
+
               <label>
                 Motivo
-                <textarea id="turnoMotivo" rows="3" placeholder="Motivo opcional"></textarea>
+                <textarea id="turnoMotivo" placeholder="Ej: Consulta de seguimiento o revisión documental"></textarea>
               </label>
-              <button type="submit">Guardar turno</button>
+
+              <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                <button type="submit" class="btn btn-primary">Guardar turno</button>
+                <button type="button" id="clearFormBtn" class="btn btn-ghost">Limpiar</button>
+              </div>
+              <div id="turnoStatus" class="status"></div>
             </form>
-            <div id="turnoStatus" class="status"></div>
-          </section>
 
-          <section class="panel">
-            <h2>Sesión</h2>
-            <p><strong>Usuario:</strong> <span id="userName">-</span></p>
-            <p><strong>Rol:</strong> <span id="userRole">-</span></p>
-            <p><strong>Token:</strong> <span id="tokenPreview">No activo</span></p>
-          </section>
+            <div style="margin-top: 28px;">
+              <div class="card-title">
+                <h3>Turnos</h3>
+              </div>
+              <ul id="turnosList" class="item-list"></ul>
+            </div>
+          </main>
         </div>
-
-        <section class="panel" style="margin-top: 20px;">
-          <h2>Mis turnos</h2>
-          <ul id="turnosList" class="turnos"></ul>
-        </section>
       </div>
     </div>
 

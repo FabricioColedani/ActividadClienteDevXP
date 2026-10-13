@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestión de Turnos</title>
+    <style>
+      :root {
+        --bg: #f3f6fb;
+        --panel: #ffffff;
+        --primary: #244b8c;
+        --primary-soft: #dfeafc;
+        --danger: #c0392b;
+        --success: #1d8f5f;
+        --text: #1d2433;
+        --muted: #5a687d;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+      .panel {
+        background: var(--panel);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 8px 18px rgba(35,64,110,0.1);
+      }
+      .auth-grid, .main-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      label {
+        display: flex;
+        flex-direction: column;
+        font-size: 14px;
+        gap: 6px;
+      }
+      input, textarea, button, select {
+        border: 1px solid #d9e0ee;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+      button {
+        cursor: pointer;
+        background: var(--primary);
+        color: white;
+        border: none;
+        font-weight: 600;
+      }
+      button.secondary {
+        background: var(--primary-soft);
+        color: var(--primary);
+      }
+      button.danger {
+        background: var(--danger);
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .status {
+        min-height: 24px;
+        font-size: 14px;
+        margin-top: 8px;
+      }
+      .status.error { color: var(--danger); }
+      .status.success { color: var(--success); }
+      .turnos {
+        list-style: none;
+        padding: 0;
+        margin: 20px 0 0;
+        display: grid;
+        gap: 12px;
+      }
+      .turno-item {
+        border: 1px solid #e4e9f4;
+        border-radius: 10px;
+        padding: 14px;
+      }
+      .turno-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+      }
+      .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        background: #e8f5ee;
+        color: var(--success);
+      }
+      .badge.cancelado {
+        background: #fdecea;
+        color: var(--danger);
+      }
+      .actions {
+        margin-top: 12px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .hidden { display: none; }
+      @media (max-width: 700px) {
+        .header { flex-direction: column; align-items: flex-start; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div>
+          <h1>Turnos XP</h1>
+        </div>
+        <button id="logoutBtn" class="secondary hidden">Cerrar sesión</button>
+      </div>
+
+      <div id="authView" class="auth-grid">
+        <section class="panel">
+          <h2>Iniciar sesión</h2>
+          <form id="loginForm">
+            <label>
+              Email
+              <input type="email" id="loginEmail" required />
+            </label>
+            <label>
+              Contraseña
+              <input type="password" id="loginPassword" required />
+            </label>
+            <button type="submit">Entrar</button>
+          </form>
+          <div id="loginStatus" class="status"></div>
+        </section>
+
+        <section class="panel">
+          <h2>Registrarse</h2>
+          <form id="registerForm">
+            <label>
+              Nombre
+              <input type="text" id="registerNombre" required />
+            </label>
+            <label>
+              Email
+              <input type="email" id="registerEmail" required />
+            </label>
+            <label>
+              Contraseña
+              <input type="password" id="registerPassword" required />
+            </label>
+            <button type="submit">Crear cuenta</button>
+          </form>
+          <div id="registerStatus" class="status"></div>
+        </section>
+      </div>
+
+      <div id="appView" class="hidden">
+        <div class="main-grid">
+          <section class="panel">
+            <h2>Crear turno</h2>
+            <form id="turnoForm">
+              <label>
+                Fecha
+                <input type="date" id="turnoFecha" required />
+              </label>
+              <label>
+                Hora
+                <input type="time" id="turnoHora" required />
+              </label>
+              <label>
+                Motivo
+                <textarea id="turnoMotivo" rows="3" placeholder="Motivo opcional"></textarea>
+              </label>
+              <button type="submit">Guardar turno</button>
+            </form>
+            <div id="turnoStatus" class="status"></div>
+          </section>
+
+          <section class="panel">
+            <h2>Sesión</h2>
+            <p><strong>Usuario:</strong> <span id="userName">-</span></p>
+            <p><strong>Rol:</strong> <span id="userRole">-</span></p>
+            <p><strong>Token:</strong> <span id="tokenPreview">No activo</span></p>
+          </section>
+        </div>
+
+        <section class="panel" style="margin-top: 20px;">
+          <h2>Mis turnos</h2>
+          <ul id="turnosList" class="turnos"></ul>
+        </section>
+      </div>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

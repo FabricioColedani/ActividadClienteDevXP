@@ -4,7 +4,7 @@ Trabajo práctico de cliente y desarrollador aplicando Programación Extrema (XP
 
 ## Objetivo
 
-Definir, desarrollar y validar una aplicación web con frontend y API REST para gestionar turnos. La entrega se considera aceptada cuando se cumplen las historias de usuario y los criterios de aceptación de este documento.
+Definir, desarrollar y validar una aplicación web con frontend y API REST para gestionar turnos. La entrega se considera aceptada cuando se cumplen las historias de usuario y los criterios de aceptación de este documento.   
 
 ## Entidad de negocio: Turno
 
